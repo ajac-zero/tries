@@ -44,7 +44,7 @@ score = (fuzzy_match × 0.7) + (recency × 0.3)
 
 ## Config
 
-- Default: `~/src/tries`
+- Default: `~/.tries`
 - Override: `TRY_PATH` env var
 
 ## Standards

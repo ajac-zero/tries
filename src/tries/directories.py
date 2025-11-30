@@ -9,12 +9,12 @@ from pathlib import Path
 def get_try_path() -> Path:
     """Get the base directory for try experiments.
 
-    Returns the path specified by TRY_PATH env var, or defaults to ~/src/tries.
+    Returns the path specified by TRY_PATH env var, or defaults to ~/.tries.
     """
     env_path = os.getenv("TRY_PATH")
     if env_path:
         return Path(env_path).expanduser()
-    return Path.home() / "src" / "tries"
+    return Path.home() / ".tries"
 
 
 def ensure_try_directory_exists() -> Path:
