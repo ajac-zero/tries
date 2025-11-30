@@ -1,0 +1,47 @@
+[project]
+name = "tries"
+version = "0.1.0"
+description = "Fuzzy directory navigator for experiments and temporary projects"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["cli", "directory", "navigation", "fuzzy-search", "experiments"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: System :: Shells",
+    "Topic :: Utilities",
+]
+authors = [
+    { name = "Anibal Angulo", email = "ajcardoza2000@gmail.com" }
+]
+dependencies = [
+    "cyclopts>=0.12.0",
+    'windows-curses>=2.4.0; sys_platform == "win32"',
+]
+
+[project.urls]
+Homepage = "https://github.com/ajac-zero/try"
+Repository = "https://github.com/ajac-zero/try"
+Issues = "https://github.com/ajac-zero/try/issues"
+
+[project.scripts]
+try = "tries.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "ruff>=0.14.7",
+    "ty>=0.0.1a29",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
