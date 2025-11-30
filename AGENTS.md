@@ -16,12 +16,14 @@ Python implementation of [tobi/try](https://github.com/tobi/try): a fuzzy-search
 ## Commands
 
 ```bash
-try                           # Browse all
-try redis                      # Jump/create
-try new api                    # Create "YYYY-MM-DD-new-api"
-try clone <url>               # Clone repo
-try . [name]                  # Worktree from current repo
-try init [path]               # Shell integration
+try                                    # Browse all
+try redis                               # Jump/create
+try new api                             # Create "YYYY-MM-DD-new-api"
+try new api --template python           # Create with template
+try clone <url>                         # Clone repo
+try . [name]                            # Worktree from current repo
+try init [path]                         # Shell integration
+try stats                               # Show dashboard
 ```
 
 ## Architecture
@@ -55,9 +57,21 @@ Priority for experiments directory:
 Example `config.json`:
 ```json
 {
-  "experiments_dir": "~/my-experiments"
+  "experiments_dir": "~/my-experiments",
+  "templates": {
+    "python": {
+      "url": "https://github.com/user/python-template"
+    },
+    "node": {
+      "path": "~/my-templates/node"
+    }
+  }
 }
 ```
+
+Templates can be:
+- **Remote**: Clone from a Git URL (`.git` is removed afterward)
+- **Local**: Copy from a local directory path
 
 ## Standards
 

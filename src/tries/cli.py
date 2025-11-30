@@ -11,6 +11,7 @@ from rich.table import Table
 from rich.panel import Panel
 
 from .directories import create_experiment, get_try_path, get_experiment_stats
+from .config import load_config, save_config, list_templates
 from .git_ops import clone_repository, create_worktree
 from .shell import detect_shell, generate_cd_command, generate_shell_function
 from .tui import TUISelector
@@ -49,15 +50,17 @@ def browse(query: str = "") -> None:
 
 
 @app.command
-def new(name: str) -> None:
+def new(name: str, template: Optional[str] = None) -> None:
     """Create a new experiment directory with today's date.
 
     Parameters
     ----------
     name : str
         Name for the new experiment. Will be prefixed with YYYY-MM-DD.
+    template : str, optional
+        Template key to scaffold the experiment.
     """
-    new_dir = create_experiment(name)
+    new_dir = create_experiment(name, template=template)
     print(generate_cd_command(new_dir))
 
 
@@ -207,6 +210,94 @@ def stats() -> None:
         )
 
     console.print(table)
+
+
+@app.command
+def template(
+    action: str,
+    name: Optional[str] = None,
+    url: Optional[str] = None,
+    path: Optional[str] = None,
+) -> None:
+    """Manage templates.
+
+    Parameters
+    ----------
+    action : str
+        Action to perform: 'add', 'remove', or 'list'
+    name : str, optional
+        Template name/key (required for 'add' and 'remove')
+    url : str, optional
+        Remote repository URL (for 'add' with --url)
+    path : str, optional
+        Local template path (for 'add' with --path)
+    """
+    action = action.lower()
+
+    if action == "list":
+        templates = list_templates()
+        if not templates:
+            console.print("[yellow]No templates registered.[/yellow]")
+            return
+
+        table = Table(title="Registered Templates", border_style="blue")
+        table.add_column("Name", style="cyan")
+        table.add_column("Type", style="green")
+        table.add_column("Source", style="magenta")
+
+        for tmpl in templates:
+            if tmpl.url:
+                table.add_row(tmpl.name, "Remote", tmpl.url)
+            else:
+                table.add_row(tmpl.name, "Local", tmpl.path or "N/A")
+
+        console.print(table)
+
+    elif action == "add":
+        if not name:
+            console.print("[red]Error: template name required for 'add'[/red]")
+            sys.exit(1)
+        if not url and not path:
+            console.print("[red]Error: specify either --url or --path[/red]")
+            sys.exit(1)
+
+        config = load_config()
+        if "templates" not in config:
+            config["templates"] = {}
+
+        if name in config["templates"]:
+            console.print(
+                f"[yellow]Template '{name}' already exists. Overwriting.[/yellow]"
+            )
+
+        config["templates"][name] = {}
+        if url:
+            config["templates"][name]["url"] = url
+        if path:
+            config["templates"][name]["path"] = path
+
+        save_config(config)
+        console.print(f"[green]✓ Template '{name}' registered[/green]")
+
+    elif action == "remove":
+        if not name:
+            console.print("[red]Error: template name required for 'remove'[/red]")
+            sys.exit(1)
+
+        config = load_config()
+        if "templates" not in config or name not in config["templates"]:
+            console.print(f"[red]Template '{name}' not found[/red]")
+            sys.exit(1)
+
+        del config["templates"][name]
+        save_config(config)
+        console.print(f"[green]✓ Template '{name}' removed[/green]")
+
+    else:
+        console.print(
+            f"[red]Unknown action '{action}'. Use 'add', 'remove', or 'list'[/red]"
+        )
+        sys.exit(1)
 
 
 def main(argv: Optional[list[str]] = None) -> int:

@@ -3,11 +3,19 @@
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple, Optional
 
 
 CONFIG_DIR = Path.home() / ".tries"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+
+
+class Template(NamedTuple):
+    """A template definition."""
+
+    name: str
+    url: Optional[str] = None  # Remote repo URL
+    path: Optional[str] = None  # Local path
 
 
 def get_config_dir() -> Path:
@@ -62,3 +70,54 @@ def get_experiments_dir() -> Path:
 
     # Default
     return get_default_experiments_dir()
+
+
+def get_template(template_key: str) -> Optional[Template]:
+    """Get a template by its key.
+
+    Parameters
+    ----------
+    template_key : str
+        The template alias/key
+
+    Returns
+    -------
+    Template or None
+        The template if found, None otherwise
+    """
+    config = load_config()
+    templates = config.get("templates", {})
+
+    if template_key not in templates:
+        return None
+
+    template_data = templates[template_key]
+    return Template(
+        name=template_key,
+        url=template_data.get("url"),
+        path=template_data.get("path"),
+    )
+
+
+def list_templates() -> list[Template]:
+    """Get all registered templates.
+
+    Returns
+    -------
+    list[Template]
+        List of all templates in config
+    """
+    config = load_config()
+    templates = config.get("templates", {})
+
+    result = []
+    for key, template_data in templates.items():
+        result.append(
+            Template(
+                name=key,
+                url=template_data.get("url"),
+                path=template_data.get("path"),
+            )
+        )
+
+    return result

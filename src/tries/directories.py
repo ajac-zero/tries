@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import NamedTuple
 
-from .config import get_experiments_dir
+from .config import get_experiments_dir, get_template
 
 
 def get_try_path() -> Path:
@@ -49,11 +49,53 @@ def get_experiment_mtime(path: Path) -> float:
         return 0.0
 
 
-def create_experiment(name: str) -> Path:
+def apply_template(target_dir: Path, template_key: str) -> bool:
+    """Apply a template to an experiment directory.
+
+    Args:
+        target_dir: Path to the experiment directory
+        template_key: Template key from config
+
+    Returns:
+        True if successful, False otherwise
+    """
+    from .git_ops import clone_repository
+
+    template = get_template(template_key)
+    if not template:
+        return False
+
+    try:
+        if template.url:
+            # Clone remote repo
+            if not clone_repository(template.url, target_dir):
+                return False
+            # Remove .git to detach from original
+            git_dir = target_dir / ".git"
+            if git_dir.exists():
+                shutil.rmtree(git_dir)
+        elif template.path:
+            # Copy local template
+            template_path = Path(template.path).expanduser()
+            if not template_path.exists():
+                return False
+            # Copy template contents
+            for item in template_path.iterdir():
+                if item.is_file():
+                    shutil.copy2(item, target_dir / item.name)
+                elif item.is_dir() and item.name != ".git":
+                    shutil.copytree(item, target_dir / item.name)
+        return True
+    except Exception:
+        return False
+
+
+def create_experiment(name: str, template: str | None = None) -> Path:
     """Create a new experiment directory with today's date prefix.
 
     Args:
         name: The project name (will be prefixed with YYYY-MM-DD)
+        template: Optional template key to apply
 
     Returns:
         Path to the newly created directory
@@ -64,6 +106,9 @@ def create_experiment(name: str) -> Path:
 
     new_dir = try_path / dirname
     new_dir.mkdir(exist_ok=True)
+
+    if template:
+        apply_template(new_dir, template)
 
     return new_dir
 
