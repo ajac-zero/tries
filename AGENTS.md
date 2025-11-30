@@ -59,7 +59,24 @@ uv run pytest tests/      # Test
 uv run ruff check         # Lint
 uv run ruff format        # Format
 uv add <package>          # Add dep
+
+# Pre-commit hooks (prek)
+prek list                 # Show all hooks
+prek run --all-files      # Run all hooks on all files
+prek run <hook-id>        # Run specific hook
 ```
+
+## Commit Format
+
+Semantic commits (enforced by pre-commit):
+
+```
+feat: add fuzzy search
+fix: handle empty directories
+docs: update readme
+```
+
+Scopes optional: `feat(cli): add verbose flag`
 
 ## Design Principles
 
