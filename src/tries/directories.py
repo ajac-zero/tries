@@ -1,21 +1,20 @@
 """Directory management for try experiments."""
 
-import os
 import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import NamedTuple
 
+from .config import get_experiments_dir
+
 
 def get_try_path() -> Path:
     """Get the base directory for try experiments.
 
-    Returns the path specified by TRY_PATH env var, or defaults to ~/.tries.
+    Returns the path specified by TRY_PATH env var, then config file,
+    or defaults to ~/.tries/experiments.
     """
-    env_path = os.getenv("TRY_PATH")
-    if env_path:
-        return Path(env_path).expanduser()
-    return Path.home() / ".tries"
+    return get_experiments_dir()
 
 
 def ensure_try_directory_exists() -> Path:

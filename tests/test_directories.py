@@ -13,13 +13,18 @@ from tries.directories import (
 
 
 def test_default_try_path():
-    """Default path should be ~/.tries."""
+    """Default path should be ~/.tries/experiments."""
     # Remove TRY_PATH but keep HOME/USERPROFILE for Path.home()
     with patch.dict("os.environ", {}, clear=False):
         os.environ.pop("TRY_PATH", None)
-        path = get_try_path()
-        expected = Path.home() / ".tries"
-        assert path == expected
+        # Mock config loading to return empty dict (use defaults)
+        with patch("tries.directories.get_experiments_dir") as mock_get_dir:
+            from tries.config import get_default_experiments_dir
+
+            mock_get_dir.return_value = get_default_experiments_dir()
+            path = get_try_path()
+            expected = Path.home() / ".tries" / "experiments"
+            assert path == expected
 
 
 def test_custom_try_path():

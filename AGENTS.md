@@ -34,6 +34,7 @@ try init [path]               # Shell integration
 | `directories.py` | CRUD ops, metadata |
 | `git_ops.py` | Clone & worktrees |
 | `shell.py` | Shell detection |
+| `config.py` | Configuration management |
 | `main.py` | Entry point |
 
 ## Scoring Formula
@@ -44,8 +45,19 @@ score = (fuzzy_match × 0.7) + (recency × 0.3)
 
 ## Config
 
-- Default: `~/.tries`
-- Override: `TRY_PATH` env var
+Configuration lives in `~/.tries/config.json` (created on first write).
+
+Priority for experiments directory:
+1. `TRY_PATH` env var (highest)
+2. `experiments_dir` in `~/.tries/config.json`
+3. `~/.tries/experiments` (default)
+
+Example `config.json`:
+```json
+{
+  "experiments_dir": "~/my-experiments"
+}
+```
 
 ## Standards
 
