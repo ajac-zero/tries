@@ -1,15 +1,21 @@
 """Command-line interface and argument parsing for try."""
 
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 import cyclopts
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
 
-from .directories import create_experiment, get_try_path
+from .directories import create_experiment, get_try_path, get_experiment_stats
 from .git_ops import clone_repository, create_worktree
 from .shell import detect_shell, generate_cd_command, generate_shell_function
 from .tui import TUISelector
+
+console = Console()
 
 app = cyclopts.App(
     help="Fuzzy directory navigator for experiments. Fresh directories for every vibe."
@@ -144,6 +150,63 @@ def init(shell: Optional[str] = None) -> None:
     if detected_shell:
         code = generate_shell_function(detected_shell)
         print(code)
+
+
+@app.command
+def stats() -> None:
+    """Display statistics about experiments.
+
+    Shows total count, disk usage, and oldest/newest experiment timestamps.
+    """
+    snapshot = get_experiment_stats()
+
+    if snapshot.total_experiments == 0:
+        console.print("[yellow]No experiments found.[/yellow]")
+        return
+
+    # Format sizes
+    def format_size(bytes_: int) -> str:
+        for unit in ("B", "KB", "MB", "GB"):
+            if bytes_ < 1024:
+                return f"{bytes_:.1f}{unit}"
+            bytes_ /= 1024
+        return f"{bytes_:.1f}TB"
+
+    def format_date(timestamp: float) -> str:
+        return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+
+    # Create summary panel
+    summary_text = f"""[cyan]Total Experiments:[/cyan] {snapshot.total_experiments}
+[cyan]Total Disk Usage:[/cyan] {format_size(snapshot.total_size_bytes)}
+[cyan]Oldest:[/cyan] {format_date(snapshot.oldest_mtime)}
+[cyan]Newest:[/cyan] {format_date(snapshot.newest_mtime)}"""
+
+    console.print(
+        Panel(summary_text, title="📊 Try Experiments Dashboard", border_style="blue")
+    )
+    console.print()
+
+    # Create experiments table
+    table = Table(title="Top 10 Experiments by Size", border_style="blue")
+    table.add_column("#", style="dim", width=3)
+    table.add_column("Name", style="cyan")
+    table.add_column("Size", justify="right", style="green")
+    table.add_column("Last Accessed", style="magenta")
+
+    sorted_experiments = sorted(
+        snapshot.experiments, key=lambda e: e.size_bytes, reverse=True
+    )
+
+    for i, exp in enumerate(sorted_experiments[:10], 1):
+        last_accessed = format_date(exp.mtime)
+        table.add_row(
+            str(i),
+            exp.name,
+            format_size(exp.size_bytes),
+            last_accessed,
+        )
+
+    console.print(table)
 
 
 def main(argv: Optional[list[str]] = None) -> int:

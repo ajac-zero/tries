@@ -4,6 +4,7 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
+from typing import NamedTuple
 
 
 def get_try_path() -> Path:
@@ -97,3 +98,71 @@ def touch_experiment(path: Path) -> None:
     """Update the modification time of an experiment to mark it as accessed."""
     if path.exists():
         path.touch()
+
+
+class ExperimentStats(NamedTuple):
+    """Statistics for an experiment directory."""
+
+    name: str
+    path: Path
+    size_bytes: int
+    mtime: float
+
+
+class StatsSnapshot(NamedTuple):
+    """Overall statistics snapshot."""
+
+    total_experiments: int
+    total_size_bytes: int
+    oldest_mtime: float
+    newest_mtime: float
+    experiments: list[ExperimentStats]
+
+
+def get_dir_size(path: Path) -> int:
+    """Get total size of a directory in bytes."""
+    try:
+        total = 0
+        for item in path.rglob("*"):
+            if item.is_file():
+                total += item.stat().st_size
+        return total
+    except (OSError, PermissionError):
+        return 0
+
+
+def get_experiment_stats() -> StatsSnapshot:
+    """Get statistics for all experiments.
+
+    Returns:
+        StatsSnapshot with aggregate stats and per-experiment details
+    """
+    experiments = get_all_experiments()
+
+    if not experiments:
+        return StatsSnapshot(
+            total_experiments=0,
+            total_size_bytes=0,
+            oldest_mtime=0.0,
+            newest_mtime=0.0,
+            experiments=[],
+        )
+
+    stats_list: list[ExperimentStats] = []
+    total_size = 0
+    mtimes = []
+
+    for exp_path in experiments:
+        size = get_dir_size(exp_path)
+        mtime = get_experiment_mtime(exp_path)
+        stats_list.append(ExperimentStats(exp_path.name, exp_path, size, mtime))
+        total_size += size
+        mtimes.append(mtime)
+
+    return StatsSnapshot(
+        total_experiments=len(experiments),
+        total_size_bytes=total_size,
+        oldest_mtime=min(mtimes) if mtimes else 0.0,
+        newest_mtime=max(mtimes) if mtimes else 0.0,
+        experiments=stats_list,
+    )

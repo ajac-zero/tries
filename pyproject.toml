@@ -24,6 +24,7 @@ authors = [
 ]
 dependencies = [
     "cyclopts>=0.12.0",
+    "rich>=13.0.0",
     'windows-curses>=2.4.0; sys_platform == "win32"',
 ]
 
